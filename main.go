@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"time"
@@ -22,12 +21,12 @@ type Book struct {
 var books []Book
 
 func checkMiddleware(c *fiber.Ctx) error {
-	start := time.Now()
+	user := c.Locals("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
 
-	fmt.Printf(
-		"URL = %s, Method = %s, Time = %s\n",
-		c.OriginalURL(), c.Method(), start,
-	)
+	if claims["role"] != "member" {
+		return fiber.ErrUnauthorized
+	}
 	return c.Next()
 }
 
@@ -45,10 +44,11 @@ func main() {
 
 	app.Post("/login", login)
 
-	app.Use(checkMiddleware)
 	app.Use(jwtware.New(jwtware.Config{
 		SigningKey: []byte(os.Getenv("JWT_SECRET")),
 	}))
+
+	app.Use(checkMiddleware)
 
 	app.Get("/books", getBooks)
 	app.Get("/books/:id", getBook)
@@ -84,12 +84,12 @@ func testHTML(c *fiber.Ctx) error {
 }
 
 func getEnv(c *fiber.Ctx) error {
-	secret := os.Getenv("SECRET")
+	secret := os.Getenv("JWT_SECRET")
 	if secret == "" {
 		secret = "defaultsecret"
 	}
 	return c.JSON(fiber.Map{
-		"SECRET": os.Getenv("SECRET"),
+		"SECRET": os.Getenv("JWT_SECRET"),
 	})
 }
 
@@ -117,11 +117,17 @@ func login(c *fiber.Ctx) error {
 
 	// Set claims
 	claims := token.Claims.(jwt.MapClaims)
-	claims["name"] = "John Doe"
-	claims["admin"] = true
+	claims["email"] = user.Email
+	claims["role"] = "admin"
 	claims["exp"] = time.Now().Add(time.Hour * 72).Unix()
+
+	t, err := token.SignedString([]byte(os.Getenv("JWT_SECRET")))
+	if err != nil {
+		return c.SendStatus(fiber.StatusInternalServerError)
+	}
 
 	return c.JSON(fiber.Map{
 		"message": "Login success",
+		"token":   t,
 	})
 }
