@@ -24,5 +24,20 @@ func main() {
 	app.Put("/books/:id", updateBook)
 	app.Delete("/books/:id", deleteBook)
 
+	app.Post("/upload", uploadFile)
 	app.Listen(":8080")
+}
+
+func uploadFile(c *fiber.Ctx) error {
+	file, err := c.FormFile("image")
+
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).SendString(err.Error())
+	}
+
+	err = c.SaveFile(file, "./uploads/"+file.Filename)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).SendString(err.Error())
+	}
+	return c.SendString("File upload complete!")
 }
