@@ -15,8 +15,8 @@ var books []Book
 func main() {
 	app := fiber.New()
 
-	books = append(books, Book{ID: 1, Tile: "1984", Author: "George Orwell"})
-	books = append(books, Book{ID: 2, Tile: "The Great Gatsby", Author: "F. Soctt Fitzgerald"})
+	books = append(books, Book{ID: 1, Title: "1984", Author: "George Orwell"})
+	books = append(books, Book{ID: 2, Title: "The Great Gatsby", Author: "F. Soctt Fitzgerald"})
 
 	app.Get("/hello", func(c *fiber.Ctx) error {
 		return c.SendString("Hello World")
