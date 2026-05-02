@@ -1,8 +1,10 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/template/html/v2"
@@ -16,6 +18,16 @@ type Book struct {
 }
 
 var books []Book
+
+func checkMiddleware(c *fiber.Ctx) error {
+	start := time.Now()
+
+	fmt.Printf(
+		"URL = %s, Method = %s, Time = %s\n",
+		c.OriginalURL(), c.Method(), start,
+	)
+	return c.Next()
+}
 
 func main() {
 	if err := godotenv.Load(); err != nil {
