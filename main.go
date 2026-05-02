@@ -7,9 +7,11 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/jwt/v2"
+	"github.com/gofiber/swagger"
 	"github.com/gofiber/template/html/v2"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/joho/godotenv"
+	_ "gofiber-test/docs"
 )
 
 type Book struct {
@@ -24,12 +26,21 @@ func checkMiddleware(c *fiber.Ctx) error {
 	user := c.Locals("user").(*jwt.Token)
 	claims := user.Claims.(jwt.MapClaims)
 
-	if claims["role"] != "member" {
+	if claims["role"] != "admin" {
 		return fiber.ErrUnauthorized
 	}
 	return c.Next()
 }
 
+// @title Book API
+// @description This is a sample server for a book API.
+// @version 1.0
+// @host localhost:8080
+// @BasePath /
+// @schemes http
+// @securityDefinitions.apikey ApiKeyAuth
+// @in header
+// @name Authorization
 func main() {
 	if err := godotenv.Load(); err != nil {
 		log.Fatal("load .env error")
@@ -38,6 +49,7 @@ func main() {
 	app := fiber.New(fiber.Config{
 		Views: engine,
 	})
+	app.Get("/docs/*", swagger.HandlerDefault)
 
 	books = append(books, Book{ID: 1, Title: "1984", Author: "George Orwell"})
 	books = append(books, Book{ID: 2, Title: "The Great Gatsby", Author: "F. Soctt Fitzgerald"})
